@@ -1,9 +1,91 @@
-__pycache__/
-*.pyc
+# ===================================================================
+# General & OS-specific
+# ===================================================================
+# Logs and databases
 *.log
 *.db
-node_modules/
-.env
-python-mini-projects/**/__pycache__/
-qml-experiments/**/build/
 
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Editor & IDE directories
+.vscode/
+.idea/
+*.swp
+*~
+
+
+# ===================================================================
+# Secrets & Environment Variables (IMPORTANT)
+# ===================================================================
+# Never commit environment variables or secrets!
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+
+# ===================================================================
+# C++ Project (terminal-game/)
+# ===================================================================
+# Compiled output directory
+terminal-game/bin/
+
+
+# ===================================================================
+# Node.js / JavaScript / TypeScript Projects
+# (Covers React, NestJS, Next.js, etc.)
+# ===================================================================
+# Dependencies
+node_modules/
+
+# Compiled TypeScript/JavaScript output
+dist/
+build/
+
+# Next.js build output and cache
+.next/
+out/
+
+# TypeScript build info file
+*.tsbuildinfo
+
+# Package manager cache and error logs
+.npm
+.yarn-cache
+npm-debug.log*
+yarn-error.log*
+
+
+# ===================================================================
+# Python Projects
+# ===================================================================
+# Byte-code and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+venv/
+env/
+.venv/
+.env/
+
+# Build and distribution artifacts
+# Note: build/ and dist/ are already listed above but included for clarity
+build/
+dist/
+*.egg-info/
+*.whl
+*.tar.gz
+
+# Testing artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
