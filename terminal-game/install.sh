@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Terminal Asteroid Dodger - One-line installer
-# Usage: curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/main/terminal-game/install.sh | bash
+# Usage: curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/main/install.sh | bash
 
 set -e
 
@@ -39,23 +39,13 @@ detect_platform() {
     
     case "$os" in
         linux*)
-            case "$arch" in
-                x86_64) echo "linux-x64" ;;
-                i386|i686) echo "linux-x86" ;;
-                armv7l) echo "linux-arm" ;;
-                aarch64) echo "linux-arm64" ;;
-                *) echo "unsupported" ;;
-            esac
+            echo "linux-x64"
             ;;
         darwin*)
-            case "$arch" in
-                x86_64) echo "macos-x64" ;;
-                arm64) echo "macos-arm64" ;;
-                *) echo "unsupported" ;;
-            esac
+            echo "macos"
             ;;
         msys*|cygwin*|mingw*)
-            echo "windows"
+            echo "unsupported"  # Windows not supported yet
             ;;
         *)
             echo "unsupported"
@@ -79,7 +69,8 @@ install_game() {
     
     if [ "$platform" = "unsupported" ]; then
         print_error "Your platform is not supported by pre-built binaries."
-        print_status "Please build from source: $REPO_URL"
+        print_status "For Windows users: Please use WSL (Windows Subsystem for Linux)"
+        print_status "Or build from source: $REPO_URL"
         exit 1
     fi
     
@@ -91,9 +82,6 @@ install_game() {
     
     # Determine binary name
     local binary_name="$GAME_NAME-$platform"
-    if [ "$platform" = "windows" ]; then
-        binary_name="$binary_name.exe"
-    fi
     
     # Download URL (GitHub releases)
     local download_url="$REPO_URL/releases/latest/download/$binary_name"
@@ -102,7 +90,7 @@ install_game() {
     print_status "Downloading from: $download_url"
     
     # Download the binary
-    if curl -L -o "$local_binary" "$download_url" 2>/dev/null; then
+    if curl -L -f -o "$local_binary" "$download_url" 2>/dev/null; then
         print_success "Downloaded successfully!"
     else
         print_error "Failed to download binary. Trying to build from source..."
@@ -127,11 +115,14 @@ install_game() {
     
     # Test the installation
     print_status "Testing installation..."
-    if "$local_binary" --help >/dev/null 2>&1 || [ $? -eq 0 ]; then
+    if [ -x "$local_binary" ]; then
         print_success "Installation test passed!"
         print_status "Run '$GAME_NAME' or '$local_binary' to play!"
+        print_status ""
+        print_status "Controls: WASD or Arrow Keys to move, Q to quit"
     else
-        print_warning "Installation completed but test failed. You may need to install ncurses:"
+        print_warning "Installation completed but binary is not executable."
+        print_status "You may need to install ncurses:"
         echo "  Ubuntu/Debian: sudo apt install libncurses5"
         echo "  Arch: sudo pacman -S ncurses"
         echo "  macOS: brew install ncurses"
@@ -153,8 +144,12 @@ build_from_source() {
         missing_deps+=("make")
     fi
     
+    if ! command -v git >/dev/null 2>&1; then
+        missing_deps+=("git")
+    fi
+    
     # Check for ncurses (this is tricky to check universally)
-    if ! ldconfig -p | grep -q ncurses 2>/dev/null && ! ls /usr/lib*/libncurses* >/dev/null 2>&1; then
+    if ! ldconfig -p 2>/dev/null | grep -q ncurses && ! ls /usr/lib*/libncurses* >/dev/null 2>&1 && ! ls /opt/homebrew/lib/libncurses* >/dev/null 2>&1; then
         missing_deps+=("ncurses development library")
     fi
     
@@ -164,9 +159,9 @@ build_from_source() {
             echo "  - $dep"
         done
         print_status "Install them with:"
-        echo "  Ubuntu/Debian: sudo apt install build-essential libncurses5-dev"
-        echo "  Arch: sudo pacman -S base-devel ncurses"
-        echo "  macOS: xcode-select --install && brew install ncurses"
+        echo "  Ubuntu/Debian: sudo apt install build-essential libncurses5-dev git"
+        echo "  Arch: sudo pacman -S base-devel ncurses git"
+        echo "  macOS: xcode-select --install && brew install ncurses git"
         exit 1
     fi
     
@@ -180,10 +175,8 @@ build_from_source() {
         exit 1
     fi
     
-    cd terminal-game
-    
     print_status "Building game..."
-    if make; then
+    if make static; then
         print_success "Build successful!"
         cp bin/main "$INSTALL_DIR/$GAME_NAME"
         chmod +x "$INSTALL_DIR/$GAME_NAME"
@@ -211,6 +204,7 @@ main() {
     echo "Run the game with: $GAME_NAME"
     echo "Or: $INSTALL_DIR/$GAME_NAME"
     echo
+    echo "Controls: WASD or Arrow Keys, Q to quit"
     echo "Enjoy dodging those asteroids! 🌟"
 }
 

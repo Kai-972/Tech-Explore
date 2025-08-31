@@ -5,8 +5,6 @@ on:
   push:
     tags:
       - 'v*'
-  release:
-    types: [created]
   workflow_dispatch:
 
 jobs:
@@ -22,20 +20,16 @@ jobs:
             platform: linux-x64-compat
             binary: asteroid-dodger-linux-x64-compat
           - os: macos-latest
-            platform: macos-x64
-            binary: asteroid-dodger-macos-x64
-          - os: macos-latest
-            platform: macos-arm64
-            binary: asteroid-dodger-macos-arm64
-          - os: windows-latest
-            platform: windows
-            binary: asteroid-dodger-windows.exe
+            platform: macos
+            binary: asteroid-dodger-macos
+          # Removed Windows since ncurses doesn't work there
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Install dependencies (Ubuntu)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04'
+      if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y build-essential libncurses5-dev
@@ -45,50 +39,76 @@ jobs:
       run: |
         brew install ncurses
 
-    - name: Install dependencies (Windows)
-      if: matrix.os == 'windows-latest'
-      run: |
-        choco install mingw
-        # Note: Windows build would require special handling for ncurses
-
     - name: Build game
-      working-directory: ./terminal-game
       run: |
         make static
         cp bin/main ${{ matrix.binary }}
 
     - name: Test binary
-      if: matrix.os != 'windows-latest'
-      working-directory: ./terminal-game
       run: |
         file ${{ matrix.binary }}
-        # Basic test - just check if binary exists and is executable
         chmod +x ${{ matrix.binary }}
         ls -la ${{ matrix.binary }}
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.binary }}
-        path: ./terminal-game/${{ matrix.binary }}
+        path: ./${{ matrix.binary }}
 
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: startsWith(github.ref, 'refs/tags/')
     
     steps:
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: ./binaries
 
     - name: Display structure
-      run: ls -la ./binaries/*
+      run: |
+        echo "Downloaded artifacts:"
+        find ./binaries -type f -name "asteroid-dodger-*"
+        ls -la ./binaries/*/
 
-    - name: Upload release assets
-      uses: softprops/action-gh-release@v1
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
       with:
         files: ./binaries/*/asteroid-dodger-*
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          🚀 **Terminal Asteroid Dodger Release ${{ github.ref_name }}**
+          
+          Download the appropriate binary for your system:
+          - `asteroid-dodger-linux-x64` - Modern Linux 64-bit
+          - `asteroid-dodger-linux-x64-compat` - Older Linux systems
+          - `asteroid-dodger-macos` - macOS (Intel/Apple Silicon)
+          
+          **Quick Start:**
+          ```bash
+          # Linux/WSL users
+          chmod +x asteroid-dodger-linux-x64
+          ./asteroid-dodger-linux-x64
+          
+          # macOS users
+          chmod +x asteroid-dodger-macos
+          ./asteroid-dodger-macos
+          ```
+          
+          **System Requirements:**
+          - Terminal with 80x24 minimum size
+          - Color support recommended
+          - ncurses library (usually pre-installed)
+          
+          **Controls:**
+          - WASD or Arrow Keys: Move ship
+          - Q: Quit game
+          - R: Restart after game over
+          
+          Enjoy dodging those asteroids! 🌟
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
