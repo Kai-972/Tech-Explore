@@ -1,0 +1,94 @@
+# .github/workflows/release.yml
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [created]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux-x64
+            binary: asteroid-dodger-linux-x64
+          - os: ubuntu-20.04
+            platform: linux-x64-compat
+            binary: asteroid-dodger-linux-x64-compat
+          - os: macos-latest
+            platform: macos-x64
+            binary: asteroid-dodger-macos-x64
+          - os: macos-latest
+            platform: macos-arm64
+            binary: asteroid-dodger-macos-arm64
+          - os: windows-latest
+            platform: windows
+            binary: asteroid-dodger-windows.exe
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libncurses5-dev
+
+    - name: Install dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install ncurses
+
+    - name: Install dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        choco install mingw
+        # Note: Windows build would require special handling for ncurses
+
+    - name: Build game
+      working-directory: ./terminal-game
+      run: |
+        make static
+        cp bin/main ${{ matrix.binary }}
+
+    - name: Test binary
+      if: matrix.os != 'windows-latest'
+      working-directory: ./terminal-game
+      run: |
+        file ${{ matrix.binary }}
+        # Basic test - just check if binary exists and is executable
+        chmod +x ${{ matrix.binary }}
+        ls -la ${{ matrix.binary }}
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ matrix.binary }}
+        path: ./terminal-game/${{ matrix.binary }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: ./binaries
+
+    - name: Display structure
+      run: ls -la ./binaries/*
+
+    - name: Upload release assets
+      uses: softprops/action-gh-release@v1
+      with:
+        files: ./binaries/*/asteroid-dodger-*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
