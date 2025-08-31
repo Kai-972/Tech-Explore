@@ -21,9 +21,6 @@ jobs:
           - name: "Modern"
             os: ubuntu-latest
             binary: asteroid-dodger-linux-x64-modern
-          - name: "Compat"
-            os: ubuntu-20.04
-            binary: asteroid-dodger-linux-x64-compat
 
     steps:
     - name: Checkout code
