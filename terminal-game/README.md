@@ -23,22 +23,52 @@ A retro-style asteroid dodging game that runs directly in your terminal! Navigat
 2. Download the appropriate file for your system:
    - `asteroid-dodger-linux-x64` (Linux 64-bit)
    - `asteroid-dodger-macos` (macOS)
-   - `asteroid-dodger-windows.exe` (Windows with WSL/terminal)
-3. Make it executable (Linux/macOS): `chmod +x asteroid-dodger-*`
-4. Run: `./asteroid-dodger-*` or double-click on Windows
+   - `asteroid-dodger-linux-x64` (Windows via WSL - see below)
+3. Make it executable (Linux/macOS/WSL): `chmod +x asteroid-dodger-*`
+4. Run: `./asteroid-dodger-*`
+
+### 🪟 Windows Users (WSL Method - Works on ANY Windows PC!)
+
+**WSL (Windows Subsystem for Linux) is perfect for potato PCs - uses minimal resources!**
+
+1. **Install WSL** (one-time setup):
+   - Open PowerShell as Administrator
+   - Run: `wsl --install`
+   - Restart your computer when prompted
+   - Choose Ubuntu when it opens
+
+2. **Play the game**:
+   ```bash
+   # Download and run (one command!)
+   curl -L -o asteroid-dodger https://github.com/Kai-972/Tech-Explore/releases/latest/download/asteroid-dodger-linux-x64
+   chmod +x asteroid-dodger
+   ./asteroid-dodger
+   ```
+
+**Why WSL is great for low-end PCs:**
+- Uses only ~100MB RAM when idle
+- No graphics overhead - pure terminal performance
+- Built into Windows 10/11 - no extra software needed
+- Your game runs lightning-fast even on old hardware!
 
 ### Option 2: One-Line Install Script
 
-**Linux/macOS:**
+**Linux/macOS/Windows(WSL):**
 ```bash
 curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/main/terminal-game/install.sh | bash
 ```
 
-**Or download and run:**
+**Or download and run manually:**
 ```bash
+# Linux/WSL
 wget https://github.com/Kai-972/Tech-Explore/releases/latest/download/asteroid-dodger-linux-x64
 chmod +x asteroid-dodger-linux-x64
 ./asteroid-dodger-linux-x64
+
+# macOS
+curl -L -o asteroid-dodger https://github.com/Kai-972/Tech-Explore/releases/latest/download/asteroid-dodger-macos
+chmod +x asteroid-dodger
+./asteroid-dodger
 ```
 
 ### Option 3: Build from Source
@@ -86,9 +116,10 @@ Pilot your ship (`o`) through the asteroid field, avoiding the dangerous asteroi
 
 - **Language**: C++11
 - **Graphics Library**: ncurses
-- **Platform Support**: Linux, macOS, Windows (WSL/Cygwin)
-- **Memory Usage**: < 5MB
+- **Platform Support**: Linux, macOS, Windows (via WSL)
+- **Memory Usage**: < 5MB RAM (perfect for potato PCs!)
 - **Terminal Requirements**: 80x24 minimum, color support recommended
+- **Windows Compatibility**: WSL uses minimal resources (~100MB idle)
 
 ## 📁 Project Structure
 
@@ -145,7 +176,6 @@ This is a learning project, but contributions are welcome! Feel free to:
 - Share your high scores
 - Fork and create your own variations
 
-
 ## 🙏 Acknowledgments
 
 Built as a learning project exploring:
@@ -157,4 +187,3 @@ Built as a learning project exploring:
 ---
 
 **Enjoy the game and may the asteroids be ever in your favor!** 🌟
-
