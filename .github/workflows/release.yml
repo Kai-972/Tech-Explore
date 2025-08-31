@@ -1,10 +1,12 @@
 # .github/workflows/release.yml
-name: Build and Release
+name: Build and Release Terminal Game
 
 on:
   push:
     tags:
       - 'v*'
+    paths:
+      - 'terminal-game/**'
   workflow_dispatch:
 
 jobs:
@@ -22,7 +24,6 @@ jobs:
           - os: macos-latest
             platform: macos
             binary: asteroid-dodger-macos
-          # Removed Windows since ncurses doesn't work there
 
     steps:
     - name: Checkout code
@@ -32,24 +33,62 @@ jobs:
       if: contains(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libncurses5-dev
+        sudo apt-get install -y build-essential libncurses5-dev libncurses-dev libtinfo-dev
+        # Try to install static versions
+        sudo apt-get install -y libncurses5-dev:amd64 || echo "Static ncurses not available"
+        # Check what we have
+        find /usr/lib* -name "*ncurses*" | head -10
 
     - name: Install dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
         brew install ncurses
+        # Check installation
+        find /opt/homebrew -name "*ncurses*" 2>/dev/null | head -10 || echo "Homebrew ncurses not found"
+
+    - name: Debug - Check build environment
+      run: |
+        echo "=== Build Environment Debug ==="
+        echo "Working directory: $(pwd)"
+        echo "Compiler version:"
+        g++ --version
+        echo "Available ncurses libraries:"
+        find /usr/lib* /lib* /opt/homebrew/lib* -name "*ncurses*" 2>/dev/null | head -20 || echo "No ncurses found"
+        echo "Static libraries check:"
+        find /usr/lib* /lib* -name "*.a" 2>/dev/null | grep ncurses || echo "No static ncurses found"
 
     - name: Build game
       working-directory: ./terminal-game
       run: |
+        echo "=== Starting Build Process ==="
+        echo "Checking libraries first:"
+        make check-libs
+        echo ""
+        echo "Cleaning previous builds:"
+        make clean
+        echo ""
+        echo "Attempting static build:"
         make static
-        cp bin/main ${{ matrix.binary }}
+        echo ""
+        echo "Build results:"
+        ls -la bin/
+        file bin/main
+        ldd bin/main || echo "ldd not available or static binary"
+
+    - name: Copy and prepare binary
+      working-directory: ./terminal-game
+      run: |
+        cp bin/main ../${{ matrix.binary }}
+        echo "Binary copied to: ${{ matrix.binary }}"
+        file ../${{ matrix.binary }}
 
     - name: Test binary
       run: |
         file ${{ matrix.binary }}
         chmod +x ${{ matrix.binary }}
         ls -la ${{ matrix.binary }}
+        # Quick test to see if it can at least start (will fail due to no terminal, but that's expected)
+        timeout 2s ./${{ matrix.binary }} || echo "Binary test completed (expected failure due to no TTY)"
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -68,11 +107,18 @@ jobs:
       with:
         path: ./binaries
 
-    - name: Display structure
+    - name: Display structure and verify binaries
       run: |
-        echo "Downloaded artifacts:"
+        echo "=== Release Artifacts ==="
         find ./binaries -type f -name "asteroid-dodger-*"
-        ls -la ./binaries/*/
+        echo ""
+        echo "Binary details:"
+        for binary in ./binaries/*/asteroid-dodger-*; do
+          echo "File: $binary"
+          file "$binary"
+          ls -la "$binary"
+          echo "---"
+        done
 
     - name: Create Release
       uses: softprops/action-gh-release@v2
@@ -86,16 +132,16 @@ jobs:
           
           Download the appropriate binary for your system:
           - `asteroid-dodger-linux-x64` - Modern Linux 64-bit
-          - `asteroid-dodger-linux-x64-compat` - Older Linux systems
+          - `asteroid-dodger-linux-x64-compat` - Older Linux systems  
           - `asteroid-dodger-macos` - macOS (Intel/Apple Silicon)
           
           **Quick Start:**
           ```bash
-          # Linux/WSL users
+          # Download and run (Linux/WSL)
           chmod +x asteroid-dodger-linux-x64
           ./asteroid-dodger-linux-x64
           
-          # macOS users
+          # Download and run (macOS)
           chmod +x asteroid-dodger-macos
           ./asteroid-dodger-macos
           ```
@@ -103,12 +149,14 @@ jobs:
           **System Requirements:**
           - Terminal with 80x24 minimum size
           - Color support recommended
-          - ncurses library (usually pre-installed)
+          - ncurses library (usually pre-installed on Linux/macOS)
           
           **Controls:**
           - WASD or Arrow Keys: Move ship
-          - Q: Quit game
+          - Q: Quit game  
           - R: Restart after game over
+          
+          **Note:** These binaries are built with static C++ libraries but may still require ncurses to be installed on your system. On most Linux distributions and macOS, ncurses is pre-installed.
           
           Enjoy dodging those asteroids! 🌟
       env:
