@@ -7,7 +7,7 @@ set -e
 
 REPO_URL="https://github.com/Kai-972/Tech-Explore"
 GAME_NAME="asteroid-dodger"
-INSTALL_DIR="$HOME/.local/bin"
+INSTALL_DIR="/usr/local/bin"
 
 # Colors for output
 RED='\033[0;31m'

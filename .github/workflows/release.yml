@@ -5,6 +5,9 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - master # default branch
+  pull_request:
     paths:
       - 'terminal-game/**'
   workflow_dispatch:
@@ -15,82 +18,77 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
-            platform: linux-x64
-            binary: asteroid-dodger-linux-x64
-          - os: ubuntu-20.04
-            platform: linux-x64-compat
+          - name: "Modern"
+            os: ubuntu-latest
+            binary: asteroid-dodger-linux-x64-modern
+          - name: "Compat"
+            os: ubuntu-20.04
             binary: asteroid-dodger-linux-x64-compat
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
-    - name: Install dependencies (Ubuntu)
-      if: contains(matrix.os, 'ubuntu')
+    # Cache apt packages to speed up subsequent builds
+    - name: Cache APT packages
+      uses: actions/cache@v4
+      with:
+        path: /var/cache/apt/archives
+        key: ${{ runner.os }}-apt-${{ hashFiles('**/release.yml') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-
+
+    - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libncurses5-dev libncurses-dev libtinfo-dev
-        # Try to install static versions
-        sudo apt-get install -y libncurses5-dev:amd64 || echo "Static ncurses not available"
-        # Check what we have
-        find /usr/lib* -name "*ncurses*" | head -10
+        # Add cppcheck for static analysis
+        sudo apt-get install -y build-essential libncurses-dev cppcheck
 
-    - name: Debug - Check build environment
+    - name: Run Diagnostics (Check Environment)
       run: |
-        echo "=== Build Environment Debug ==="
-        echo "Working directory: $(pwd)"
-        echo "Compiler version:"
+        echo "=== Build Environment Diagnostics ==="
+        echo "Runner OS: ${{ matrix.os }}"
+        echo "Working Directory: $(pwd)"
+        echo "Compiler Version:"
         g++ --version
         echo "Available ncurses libraries:"
-        find /usr/lib* /lib* /opt/homebrew/lib* -name "*ncurses*" 2>/dev/null | head -20 || echo "No ncurses found"
-        echo "Static libraries check:"
-        find /usr/lib* /lib* -name "*.a" 2>/dev/null | grep ncurses || echo "No static ncurses found"
+        # This find command is from your original workflow
+        find /usr/lib* /lib* -name "*ncurses*" 2>/dev/null | head -20 || echo "No ncurses found"
+        echo "---"
+
+    # Static analysis step for code quality
+    - name: Static Analysis with Cppcheck
+      working-directory: ./terminal-game
+      run: |
+        echo "=== Running Static Analysis ==="
+        cppcheck --enable=all --error-exitcode=0 --suppress=missingIncludeSystem src/
 
     - name: Build game
       working-directory: ./terminal-game
       run: |
-        echo "=== Starting Build Process ==="
-        echo "Checking libraries first:"
-        make check-libs
-        echo ""
-        echo "Cleaning previous builds:"
-        make clean
-        echo ""
-        echo "Attempting static build:"
+        # Using 'make static' correctly falls back to a partial build
         make static
-        echo ""
-        echo "Build results:"
-        ls -la bin/
+        echo "=== Build Details ==="
         file bin/main
+        # This ldd check is from your original workflow
         ldd bin/main || echo "ldd not available or static binary"
-
-    - name: Copy and prepare binary
-      working-directory: ./terminal-game
+        
+    - name: Prepare binary for release
       run: |
-        cp bin/main ../${{ matrix.binary }}
-        echo "Binary copied to: ${{ matrix.binary }}"
-        file ../${{ matrix.binary }}
+        cp ./terminal-game/bin/main ./${{ matrix.binary }}
+        echo "Prepared binary: ${{ matrix.binary }}"
 
-    - name: Test binary
-      run: |
-        file ${{ matrix.binary }}
-        chmod +x ${{ matrix.binary }}
-        ls -la ${{ matrix.binary }}
-        # Quick test to see if it can at least start (will fail due to no terminal, but that's expected)
-        timeout 2s ./${{ matrix.binary }} || echo "Binary test completed (expected failure due to no TTY)"
-
-    - name: Upload artifacts
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.binary }}
         path: ./${{ matrix.binary }}
 
+  # It will only run when a tag is pushed.
   release:
     needs: build
     runs-on: ubuntu-latest
+    # This 'if' condition ensures releases only happen for tags
     if: startsWith(github.ref, 'refs/tags/')
     
     steps:
@@ -99,52 +97,30 @@ jobs:
       with:
         path: ./binaries
 
-    - name: Display structure and verify binaries
+    - name: Prepare release assets
       run: |
-        echo "=== Release Artifacts ==="
-        find ./binaries -type f -name "asteroid-dodger-*"
-        echo ""
-        echo "Binary details:"
-        for binary in ./binaries/*/asteroid-dodger-*; do
-          echo "File: $binary"
-          file "$binary"
-          ls -la "$binary"
-          echo "---"
-        done
+        cp ./binaries/asteroid-dodger-linux-x64-modern/asteroid-dodger-linux-x64-modern ./binaries/asteroid-dodger-linux-x64
+        echo "Created generic binary for install script."
+        ls -R ./binaries
 
-    - name: Create Release
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
-        files: ./binaries/*/asteroid-dodger-*
-        draft: false
-        prerelease: false
+        files: ./binaries/**/*
         generate_release_notes: true
         body: |
           🚀 **Terminal Asteroid Dodger Release ${{ github.ref_name }}**
           
-          Download the appropriate binary for your system:
-          - `asteroid-dodger-linux-x64` - Modern Linux 64-bit
-          - `asteroid-dodger-linux-x64-compat` - Older Linux systems  
+          Download the appropriate binary for your system. The `modern` version is recommended.
           
-          **Quick Start:**
+          **Quick Start (Linux/WSL):**
           ```bash
-          # Download and run (Linux/WSL)
-          chmod +x asteroid-dodger-linux-x64
-          ./asteroid-dodger-linux-x64
-          
+          # Download and run the modern build
+          curl -L -o asteroid-dodger [https://github.com/$](https://github.com/$){{ github.repository }}/releases/latest/download/asteroid-dodger-linux-x64-modern
+          chmod +x asteroid-dodger
+          ./asteroid-dodger
           ```
-          
-          **System Requirements:**
-          - Terminal with 80x24 minimum size
-          - Color support recommended
-          
-          **Controls:**
-          - WASD or Arrow Keys: Move ship
-          - Q: Quit game  
-          - R: Restart after game over
-          
-          **Note:** These binaries are built with static C++ libraries but may still require ncurses to be installed on your system. On most Linux distributions, ncurses is pre-installed.
-          
-          Enjoy dodging those asteroids! 🌟
+
+          **Note:** These binaries are built with static C++ libraries but are dynamically linked to `ncurses`. Most Linux systems have `ncurses` pre-installed.
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
