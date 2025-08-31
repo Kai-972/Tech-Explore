@@ -89,6 +89,8 @@ jobs:
     runs-on: ubuntu-latest
     # This 'if' condition ensures releases only happen for tags
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
     
     steps:
     - name: Download all artifacts
