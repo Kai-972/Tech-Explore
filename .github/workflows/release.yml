@@ -117,7 +117,7 @@ jobs:
           **Quick Start (Linux/WSL):**
           ```bash
           # Download and run the modern build
-          curl -L -o asteroid-dodger [https://github.com/$](https://github.com/$){{ github.repository }}/releases/latest/download/asteroid-dodger-linux-x64-modern
+          curl -L -o asteroid-dodger https://github.com/${{ github.repository }}/releases/latest/download/asteroid-dodger-linux-x64-modern 
           chmod +x asteroid-dodger
           ./asteroid-dodger
           ```
