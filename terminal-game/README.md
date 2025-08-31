@@ -22,9 +22,8 @@ A retro-style asteroid dodging game that runs directly in your terminal! Navigat
 1. Go to [Releases](https://github.com/Kai-972/Tech-Explore/releases)
 2. Download the appropriate file for your system:
    - `asteroid-dodger-linux-x64` (Linux 64-bit)
-   - `asteroid-dodger-macos` (macOS)
    - `asteroid-dodger-linux-x64` (Windows via WSL - see below)
-3. Make it executable (Linux/macOS/WSL): `chmod +x asteroid-dodger-*`
+3. Make it executable (Linux/WSL): `chmod +x asteroid-dodger-*`
 4. Run: `./asteroid-dodger-*`
 
 ### 🪟 Windows Users (WSL Method - Works on ANY Windows PC!)
@@ -53,7 +52,7 @@ A retro-style asteroid dodging game that runs directly in your terminal! Navigat
 
 ### Option 2: One-Line Install Script
 
-**Linux/macOS/Windows(WSL):**
+**Linux/Windows(WSL):**
 ```bash
 curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/main/terminal-game/install.sh | bash
 ```
@@ -65,12 +64,6 @@ wget https://github.com/Kai-972/Tech-Explore/releases/latest/download/asteroid-d
 chmod +x asteroid-dodger-linux-x64
 ./asteroid-dodger-linux-x64
 
-# macOS
-curl -L -o asteroid-dodger https://github.com/Kai-972/Tech-Explore/releases/latest/download/asteroid-dodger-macos
-chmod +x asteroid-dodger
-./asteroid-dodger
-```
-
 ### Option 3: Build from Source
 
 **Prerequisites:**
@@ -80,9 +73,6 @@ sudo apt update && sudo apt install build-essential libncurses5-dev
 
 # Arch Linux
 sudo pacman -S base-devel ncurses
-
-# macOS
-brew install ncurses
 
 # Fedora/RHEL
 sudo dnf install gcc-c++ ncurses-devel
@@ -116,7 +106,7 @@ Pilot your ship (`o`) through the asteroid field, avoiding the dangerous asteroi
 
 - **Language**: C++11
 - **Graphics Library**: ncurses
-- **Platform Support**: Linux, macOS, Windows (via WSL)
+- **Platform Support**: Linux, Windows (via WSL)
 - **Memory Usage**: < 5MB RAM (perfect for potato PCs!)
 - **Terminal Requirements**: 80x24 minimum, color support recommended
 - **Windows Compatibility**: WSL uses minimal resources (~100MB idle)

@@ -21,9 +21,6 @@ jobs:
           - os: ubuntu-20.04
             platform: linux-x64-compat
             binary: asteroid-dodger-linux-x64-compat
-          - os: macos-14
-            platform: macos
-            binary: asteroid-dodger-macos
 
     steps:
     - name: Checkout code
@@ -40,13 +37,6 @@ jobs:
         sudo apt-get install -y libncurses5-dev:amd64 || echo "Static ncurses not available"
         # Check what we have
         find /usr/lib* -name "*ncurses*" | head -10
-
-    - name: Install dependencies (macOS)
-      if: matrix.os == 'macos-14'
-      run: |
-        brew install ncurses
-        # Check installation
-        find /opt/homebrew -name "*ncurses*" 2>/dev/null | head -10 || echo "Homebrew ncurses not found"
 
     - name: Debug - Check build environment
       run: |
@@ -135,7 +125,6 @@ jobs:
           Download the appropriate binary for your system:
           - `asteroid-dodger-linux-x64` - Modern Linux 64-bit
           - `asteroid-dodger-linux-x64-compat` - Older Linux systems  
-          - `asteroid-dodger-macos` - macOS (Intel/Apple Silicon)
           
           **Quick Start:**
           ```bash
@@ -143,22 +132,18 @@ jobs:
           chmod +x asteroid-dodger-linux-x64
           ./asteroid-dodger-linux-x64
           
-          # Download and run (macOS)
-          chmod +x asteroid-dodger-macos
-          ./asteroid-dodger-macos
           ```
           
           **System Requirements:**
           - Terminal with 80x24 minimum size
           - Color support recommended
-          - ncurses library (usually pre-installed on Linux/macOS)
           
           **Controls:**
           - WASD or Arrow Keys: Move ship
           - Q: Quit game  
           - R: Restart after game over
           
-          **Note:** These binaries are built with static C++ libraries but may still require ncurses to be installed on your system. On most Linux distributions and macOS, ncurses is pre-installed.
+          **Note:** These binaries are built with static C++ libraries but may still require ncurses to be installed on your system. On most Linux distributions, ncurses is pre-installed.
           
           Enjoy dodging those asteroids! 🌟
       env:
