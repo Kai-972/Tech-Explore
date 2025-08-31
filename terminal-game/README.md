@@ -54,7 +54,7 @@ A retro-style asteroid dodging game that runs directly in your terminal! Navigat
 
 **Linux/Windows(WSL):**
 ```bash
-curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/main/terminal-game/install.sh | bash
+curl -s https://raw.githubusercontent.com/Kai-972/Tech-Explore/master/terminal-game/install.sh | bash
 ```
 
 **Or download and run manually:**
